@@ -6,23 +6,3 @@ pedro,Ruido,El vecino tiene mucho ruido,2025-04-27 10:25:38,Baja,Resuelto automá
 jose,Agua,Hay una fuja de agua,2025-04-27 10:31:15,Baja,Resuelto automáticamente,Por favor cierre la llave principal de agua y contacte a mantenimiento.
 Astrid,Agua,Fuga de agua,2025-04-27 16:27:51,Baja,Resuelto automáticamente,Por favor cierre la llave principal de agua y contacte a mantenimiento.
 Jose,General,No funciona una puerta,2025-04-27 16:29:59,Baja,Derivado a encargado,Pendiente derivación
-Abraham,General,Foco quemado,2025-04-29 20:18:48,Baja,Derivado a encargado,Pendiente derivación
-Pedro,General,robo,2025-04-29 20:44:26,Alta,Derivado a encargado,Pendiente derivación
-Juan,General,suciedad,2025-04-29 20:47:32,Baja,Derivado a encargado,Pendiente derivación
-Marcos,General,corto,2025-04-29 20:48:21,Baja,Derivado a encargado,Pendiente derivación
-Cuan,General,Corto circuito,2025-04-29 20:48:59,Alta,Derivado a encargado,Pendiente derivación
-Lucas,General,Se callo basura en el patio,2025-04-29 20:49:41,Media,Derivado a encargado,Pendiente derivación
-Pepe,General,Limpieza,2025-04-29 20:56:14,Baja,Derivado a encargado,Pendiente derivación
-Irra,General,robo,2025-04-29 21:00:21,Alta,Resuelto automáticamente,{'default': 'Su solicitud ha sido registrada. Personal de mantenimiento evaluará la situación en las próximas 24 horas.'}
-Abraham,General,cerradura,2025-04-29 21:05:21,Baja,Resuelto automáticamente,{'default': 'Su solicitud ha sido registrada. Personal de mantenimiento evaluará la situación en las próximas 24 horas.'}
-Abraham,General,corto_circuito,2025-04-29 21:07:07,Baja,Resuelto automáticamente,{'default': 'Su solicitud ha sido registrada. Personal de mantenimiento evaluará la situación en las próximas 24 horas.'}
-Juan Pérez,General,"Hay una fuga de agua muy grande en el baño, está saliendo agua por todas partes y está inundando el departamento.",2025-04-29 21:08:17,Baja,Resuelto automáticamente,{'default': 'Su solicitud ha sido registrada. Personal de mantenimiento evaluará la situación en las próximas 24 horas.'}
-María González,General,Hay chispas saliendo del enchufe de la cocina y huele a quemado. El interruptor está caliente.,2025-04-29 21:08:46,Baja,Resuelto automáticamente,{'default': 'Su solicitud ha sido registrada. Personal de mantenimiento evaluará la situación en las próximas 24 horas.'}
-Abraham,Agua,"Hay una fuga de agua muy grande en el baño, está saliendo agua por todas partes y está inundando el departamento.",2025-04-29 21:12:27,Baja,Resuelto automáticamente,Por favor cierre la llave principal de agua y contacte a mantenimiento al 555-0123.
-María González,Electricidad,Hay chispas saliendo del enchufe de la cocina y huele a quemado. El interruptor está caliente.,2025-04-29 21:14:03,Baja,Resuelto automáticamente,Apague el interruptor principal y espere al electricista del residencial.
-Carlos Ramírez,Agua,"Hay una inundación grave en mi departamento, el agua está saliendo a chorros de la tubería del baño y ya hay 2cm de agua en el piso",2025-04-29 21:15:11,Alta,Urgente - En proceso,URGENTE: Por favor cierre la llave principal de agua y contacte a mantenimiento al 555-0123.
-Ana Martínez,Electricidad,"Hay chispas y humo saliendo del enchufe de la cocina, huele a quemado y el interruptor está muy caliente",2025-04-29 21:15:48,Alta,Urgente - En proceso,URGENTE: Apague el interruptor principal y espere al electricista del residencial.
-Juan PÃ©rez,Agua,"Hay chispas y humo saliendo del enchufe de la cocina, huele a quemado",2025-04-29 21:24:07,Baja,Auto-resoluciÃ³n sugerida,Por favor cierre la llave principal de agua y contacte a mantenimiento al 555-0123.,No
-Carlos RodrÃ­guez,Agua,"TuberÃ­a rota en la cocina, hay una inundaciÃ³n grave y el agua estÃ¡ saliendo a chorros",2025-04-29 21:24:44,Alta,Derivado a especialista,URGENTE: Se requiere atenciÃ³n profesional. Un especialista en Agua serÃ¡ asignado. Tiempo estimado de respuesta: 30 minutos.,SÃ­
-Juan,Ruido,Hay mucho ruido por musica,2025-04-29 21:28:30,Media,Derivado a especialista,Se requiere atenciÃ³n profesional. Un especialista en Ruido serÃ¡ asignado.,SÃ­
-Carlos RodrÃ­guez,Mantenimiento,Hay una plaga de cucarachas en mi piso,2025-04-29 21:32:20,Media,Derivado a encargado,Se requiere atenciÃ³n profesional. Un especialista en Mantenimiento serÃ¡ asignado.,SÃ­
