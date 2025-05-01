@@ -6,3 +6,6 @@ pedro,Ruido,El vecino tiene mucho ruido,2025-04-27 10:25:38,Baja,Resuelto automá
 jose,Agua,Hay una fuja de agua,2025-04-27 10:31:15,Baja,Resuelto automáticamente,Por favor cierre la llave principal de agua y contacte a mantenimiento.
 Astrid,Agua,Fuga de agua,2025-04-27 16:27:51,Baja,Resuelto automáticamente,Por favor cierre la llave principal de agua y contacte a mantenimiento.
 Jose,General,No funciona una puerta,2025-04-27 16:29:59,Baja,Derivado a encargado,Pendiente derivación
+Juan,Electricidad,Corto circuito,2025-04-30 18:55:16,Alta,Resuelto automáticamente,Apague el interruptor principal y espere al electricista del residencial.
+Enrique,Electricidad,Corto Circuito,2025-04-30 20:25:32,Alta,Resuelto automáticamente,Apague el interruptor principal y espere al electricista del residencial.
+Juan,Agua,Fuga de agua,2025-04-30 20:32:44,Baja,Resuelto automáticamente,Por favor cierre la llave principal de agua y contacte a mantenimiento.

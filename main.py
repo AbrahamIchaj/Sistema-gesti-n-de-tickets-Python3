@@ -1,16 +1,20 @@
-import tkinter as tk
-from tkinter import messagebox, ttk
-from PIL import Image, ImageTk
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+                            QLabel, QPushButton, QFrame, QStackedWidget, QMessageBox)
+from PyQt5.QtGui import QIcon, QPixmap, QFont, QPalette, QColor
+from PyQt5.QtCore import Qt, QSize
+from PIL import Image
+import sys
 import os
+import csv
+from datetime import datetime
 
-class ModernDashboard:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Sistema de Gestión de Tickets")
-        self.root.geometry("1200x700")
-        self.root.resizable(True, True)
+class ModernDashboard(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Sistema de Gestión de Tickets")
+        self.setGeometry(100, 100, 1200, 700)
         
-        # Configurar tema y colores
+        # Configurar colores
         self.COLORS = {
             'primary': '#000000',
             'secondary': '#34495e',
@@ -20,172 +24,238 @@ class ModernDashboard:
             'white': '#ffffff'
         }
         
-        # Configurar estilo
-        self.style = ttk.Style()
-        self.style.theme_use('clam')
-        self.style.configure('Sidebar.TFrame', background=self.COLORS['primary'])
-        self.style.configure('Content.TFrame', background=self.COLORS['bg'])
-        self.style.configure('Dashboard.TLabel',
-                           background=self.COLORS['primary'],
-                           foreground=self.COLORS['white'],
-                           font=('Helvetica', 12))
+        self.setup_ui()
+    
+    def setup_ui(self):
+        # Widget central
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
         
-        self.create_widgets()
-
-    def create_widgets(self):
-        # Container principal
-        self.main_container = ttk.Frame(self.root)
-        self.main_container.pack(fill=tk.BOTH, expand=True)
+        # Layout principal
+        main_layout = QHBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
         # Sidebar
-        self.sidebar = ttk.Frame(self.main_container, style='Sidebar.TFrame', width=250)
-        self.sidebar.pack(side=tk.LEFT, fill=tk.Y)
-        self.sidebar.pack_propagate(False)
-        
-        # Logo en sidebar
-        try:
-            logo = Image.open("assets/logo.png")
-            logo = logo.resize((200, 200))
-            logo_tk = ImageTk.PhotoImage(logo)
-            logo_label = tk.Label(self.sidebar, image=logo_tk, bg=self.COLORS['primary'])
-            logo_label.image = logo_tk
-            logo_label.pack(pady=20)
-        except:
-            # Fallback si no encuentra el logo
-            ttk.Label(self.sidebar, text="Sistema de Tickets", 
-                     style='Dashboard.TLabel').pack(pady=20)
-
-        # Botones del sidebar
-        self.create_sidebar_button("Nuevo Ticket", self.crear_ticket, "icon_ticket.png")
-        self.create_sidebar_button("Ver Historial", self.ver_historial, "icon_report.png")
-        self.create_sidebar_button("Reportes", self.generar_reportes, "icon_exit.png")
-        
-        # Botón salir
-        ttk.Separator(self.sidebar, orient='horizontal').pack(fill='x', pady=10)
-        self.create_sidebar_button("Salir", self.salir, None, True)
+        self.setup_sidebar(main_layout)
         
         # Contenido principal
-        self.content = ttk.Frame(self.main_container, style='Content.TFrame')
-        self.content.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.current_content = None
+        self.setup_main_content(main_layout)
     
-    def clear_content(self):
-        # Clear current content
-        if self.content:
-            for widget in self.content.winfo_children():
-                widget.destroy()
+    def setup_sidebar(self, main_layout):
+        # Crear sidebar
+        sidebar = QFrame()
+        sidebar.setFixedWidth(250)
+        sidebar.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.COLORS['primary']};
+                border: none;
+            }}
+        """)
+        
+        sidebar_layout = QVBoxLayout(sidebar)
+        sidebar_layout.setContentsMargins(0, 20, 0, 20)
+        sidebar_layout.setSpacing(10)
+        
+        # Logo
+        try:
+            logo_pixmap = QPixmap("assets/logo.png").scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            logo_label = QLabel()
+            logo_label.setPixmap(logo_pixmap)
+            logo_label.setAlignment(Qt.AlignCenter)
+        except:
+            logo_label = QLabel("Sistema de Tickets")
+            logo_label.setStyleSheet(f"""
+                color: {self.COLORS['white']};
+                font-size: 18px;
+                font-weight: bold;
+                padding: 20px;
+            """)
+            logo_label.setAlignment(Qt.AlignCenter)
+        
+        sidebar_layout.addWidget(logo_label)
+        
+        # Botones del sidebar
+        buttons = [
+            ("Inicio", self.mostrar_dashboard, "home.png"),
+            ("Nuevo Ticket", self.crear_ticket, "add.png"),
+            ("Ver Historial", self.ver_historial, "record.png"),
+            ("Reportes", self.generar_reportes, "reports.png"),
+            ("Salir", self.salir, None)
+        ]
+        
+        for text, callback, icon_path in buttons:
+            btn = self.create_sidebar_button(text, callback, icon_path, text == "Salir")
+            sidebar_layout.addWidget(btn)
+        
+        sidebar_layout.addStretch()
+        main_layout.addWidget(sidebar)
     
-    def show_dashboard(self):
-        self.clear_content()
-        # Dashboard header
-        header = ttk.Frame(self.content, style='Content.TFrame')
-        header.pack(fill=tk.X, padx=20, pady=20)
-        ttk.Label(header, 
-                 text="Dashboard de Gestión de Tickets",
-                 font=('Helvetica', 24),
-                 background=self.COLORS['bg']).pack(side=tk.LEFT)
+    def create_sidebar_button(self, text, callback, icon_path, is_exit=False):
+        btn = QPushButton(text)
+        if icon_path:
+            try:
+                btn.setIcon(QIcon(f"assets/{icon_path}"))
+                btn.setIconSize(QSize(24, 24))
+            except:
+                pass
+        
+        btn.setStyleSheet(f"""
+            QPushButton {{
+                color: {self.COLORS['white']};
+                background-color: {'#e74c3c' if is_exit else self.COLORS['primary']};
+                border: none;
+                padding: 15px;
+                text-align: left;
+                font-size: 14px;
+                border-radius: 5px;
+                margin: 2px 10px;
+            }}
+            QPushButton:hover {{
+                background-color: {'#c0392b' if is_exit else self.COLORS['secondary']};
+            }}
+        """)
+        btn.setCursor(Qt.PointingHandCursor)
+        btn.clicked.connect(callback)
+        return btn
+    
+    def setup_main_content(self, main_layout):
+        # Contenedor principal
+        self.content_widget = QStackedWidget()
+        self.content_widget.setStyleSheet(f"""
+            QStackedWidget {{
+                background-color: {self.COLORS['bg']};
+                border: none;
+            }}
+        """)
+        
+        # Dashboard inicial
+        self.setup_dashboard()
+        main_layout.addWidget(self.content_widget)
+    
+    def setup_dashboard(self):
+        dashboard = QWidget()
+        layout = QVBoxLayout(dashboard)
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
+        
+        # Título
+        title = QLabel("Dashboard de Gestión de Tickets")
+        title.setStyleSheet(f"""
+            color: {self.COLORS['text']};
+            font-size: 24px;
+            font-weight: bold;
+            padding-bottom: 20px;
+        """)
+        layout.addWidget(title)
+        
+        # Obtener estadísticas de ticket_data.csv
+        try:
+            with open('ticket_data.csv', mode='r', newline='') as file:
+                tickets = list(csv.DictReader(file))
+                
+                from datetime import datetime
+                today = datetime.now().strftime("%Y-%m-%d")
+                
+                total_tickets = len(tickets)
+                tickets_abiertos = sum(1 for t in tickets if t['Estado'] == 'Derivado a encargado')
+                resueltos_hoy = sum(1 for t in tickets if t['FechaHora'].startswith(today))
+                
+                tiempo_promedio = "N/A"
+                
+                stats = [
+                    ("Total Tickets", str(total_tickets)),
+                    ("Tickets Abiertos", str(tickets_abiertos)),
+                    ("Resueltos Hoy", str(resueltos_hoy)),
+                    ("Tiempo Promedio", tiempo_promedio)
+                ]
+        except FileNotFoundError:
+            stats = [
+                ("Total Tickets", "0"),
+                ("Tickets Abiertos", "0"),
+                ("Resueltos Hoy", "0"),
+                ("Tiempo Promedio", "0h")
+            ]
         
         # Grid de estadísticas
-        self.create_stats_grid()
+        stats_layout = QHBoxLayout()
+        for title, value in stats:
+            card = self.create_stat_card(title, value)
+            stats_layout.addWidget(card)
+        
+        layout.addLayout(stats_layout)
+        layout.addStretch()
+        
+        self.content_widget.addWidget(dashboard)
+    
+    def create_stat_card(self, title, value):
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.COLORS['white']};
+                border-radius: 10px;
+                border: 1px solid #e0e0e0;
+                padding: 20px;
+            }}
+        """)
+        
+        layout = QVBoxLayout(card)
+        
+        title_label = QLabel(title)
+        title_label.setStyleSheet(f"""
+            color: {self.COLORS['text']};
+            font-size: 16px;
+        """)
+        
+        value_label = QLabel(value)
+        value_label.setStyleSheet(f"""
+            color: {self.COLORS['accent']};
+            font-size: 28px;
+            font-weight: bold;
+        """)
+        
+        layout.addWidget(title_label)
+        layout.addWidget(value_label)
+        layout.setAlignment(Qt.AlignCenter)
+        
+        return card
 
     def crear_ticket(self):
-        self.clear_content()
         from ticket_manager import crear_ticket_frame
-        crear_ticket_frame(self.content)
+        crear_ticket_frame(self.content_widget)
 
     def ver_historial(self):
-        self.clear_content()
         from ticket_manager import ver_historial_frame
-        ver_historial_frame(self.content)
+        ver_historial_frame(self.content_widget)
 
     def generar_reportes(self):
-        self.clear_content()
         from report_generator import generar_reportes_frame
-        generar_reportes_frame(self.content)
-
-    def create_sidebar_button(self, text, command, icon_path, is_exit=False):
-        btn_frame = ttk.Frame(self.sidebar, style='Sidebar.TFrame')
-        btn_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        try:
-            if icon_path:
-                icon = Image.open(f"assets/{icon_path}")
-                icon = icon.resize((24, 24))
-                icon_tk = ImageTk.PhotoImage(icon)
-                icon_label = tk.Label(btn_frame, image=icon_tk, bg=self.COLORS['primary'])
-                icon_label.image = icon_tk
-                icon_label.pack(side=tk.LEFT, padx=10)
-        except:
-            pass
-
-        btn = tk.Button(btn_frame,
-                       text=text,
-                       command=command,
-                       font=('Helvetica', 11),
-                       bd=0,
-                       bg=self.COLORS['primary'] if not is_exit else '#e74c3c',
-                       fg=self.COLORS['white'],
-                       activebackground=self.COLORS['secondary'] if not is_exit else '#c0392b',
-                       activeforeground=self.COLORS['white'],
-                       cursor='hand2',
-                       width=20,
-                       height=2)
-        btn.pack(fill=tk.X, padx=5)
-
-    def create_stats_grid(self):
-        stats_frame = ttk.Frame(self.content, style='Content.TFrame')
-        stats_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-        
-        # Configurar grid
-        for i in range(2):
-            stats_frame.grid_columnconfigure(i, weight=1)
-        for i in range(2):
-            stats_frame.grid_rowconfigure(i, weight=1)
-        
-        # Crear tarjetas de estadísticas
-        self.create_stat_card(stats_frame, "Total Tickets", "0", 0, 0)
-        self.create_stat_card(stats_frame, "Tickets Abiertos", "0", 0, 1)
-        self.create_stat_card(stats_frame, "Resueltos Hoy", "0", 1, 0)
-        self.create_stat_card(stats_frame, "Tiempo Promedio", "0h", 1, 1)
-
-    def create_stat_card(self, parent, title, value, row, col):
-        card = ttk.Frame(parent)
-        card.grid(row=row, column=col, padx=10, pady=10, sticky='nsew')
-        
-        # Configurar estilo de la tarjeta
-        card_style = ttk.Frame(card, style='Content.TFrame')
-        card_style.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
-        
-        inner_frame = tk.Frame(card_style, bg=self.COLORS['white'])
-        inner_frame.pack(fill=tk.BOTH, expand=True, padx=1, pady=1)
-        
-        ttk.Label(inner_frame,
-                 text=title,
-                 font=('Helvetica', 14),
-                 background=self.COLORS['white']).pack(pady=(20,5))
-        
-        ttk.Label(inner_frame,
-                 text=value,
-                 font=('Helvetica', 24, 'bold'),
-                 background=self.COLORS['white']).pack(pady=(5,20))
-
-    def crear_ticket(self):
-        from ticket_manager import crear_ticket
-        crear_ticket()
-
-    def ver_historial(self):
-        from ticket_manager import ver_historial
-        ver_historial()
-
-    def generar_reportes(self):
-        from report_generator import generar_reportes
-        generar_reportes()
+        generar_reportes_frame(self.content_widget)
 
     def salir(self):
-        if messagebox.askyesno("Salir", "¿Deseas salir de la aplicación?"):
-            self.root.destroy()
+        reply = QMessageBox.question(
+            self, 'Salir',
+            '¿Deseas salir de la aplicación?',
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            self.close()
+
+    def mostrar_dashboard(self):
+        # Set the current widget to index 0 (dashboard)
+        self.content_widget.setCurrentIndex(0)
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = ModernDashboard(root)
-    root.mainloop()
+    app = QApplication(sys.argv)
+    
+    # Establecer estilo de la aplicación
+    app.setStyle("Fusion")
+    
+    # Configurar fuente predeterminada
+    app.setFont(QFont("Segoe UI", 10))
+    
+    window = ModernDashboard()
+    window.show()
+    sys.exit(app.exec_())

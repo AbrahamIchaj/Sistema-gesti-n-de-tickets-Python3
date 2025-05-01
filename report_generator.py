@@ -1,180 +1,226 @@
-# report_generator.py
-import csv
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+                            QFrame, QPushButton, QScrollArea)
+from PyQt5.QtCore import Qt
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import csv
 from collections import Counter
-import tkinter as tk
-from tkinter import ttk, messagebox
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-def generar_reportes():
+def generar_reportes_frame(parent):
+    # Crear un widget principal con área de desplazamiento
+    main_widget = QWidget()
+    scroll = QScrollArea()
+    scroll.setWidget(main_widget)
+    scroll.setWidgetResizable(True)
+    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    scroll.setStyleSheet("""
+        QScrollArea {
+            border: none;
+            background-color: white;
+        }
+    """)
+    
+    layout = QVBoxLayout(main_widget)
+    layout.setSpacing(20)
+    layout.setContentsMargins(20, 20, 20, 20)
+    
+    # Header
+    header_label = QLabel("Reportes de Tickets")
+    header_label.setStyleSheet("""
+        QLabel {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            padding: 20px 0;
+        }
+    """)
+    layout.addWidget(header_label)
+    
     try:
         with open('ticket_data.csv', mode='r') as file:
             tickets = list(csv.DictReader(file))
             
         if not tickets:
-            messagebox.showinfo("Información", "No hay datos para generar reporte.")
-            return
-            
-        # Define colors and fonts
-        COLORS = {
-            'bg': '#ecf0f1',
-            'frame_bg': '#ffffff',
-            'text': '#2c3e50'
-        }
-        FONT = ('Helvetica', 12)
-        TITLE_FONT = ('Helvetica', 14, 'bold')
+            label = QLabel("No hay datos para generar reporte.")
+            label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label)
+            return frame
         
-        # Create report window with style
-        report_window = tk.Toplevel()
-        report_window.title("Reportes de Tickets")
-        report_window.geometry("1000x1000")
-        report_window.configure(bg=COLORS['bg'])
+        # Estadísticas
+        stats_frame = QFrame()
+        stats_frame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 10px;
+                border: 1px solid #e0e0e0;
+            }
+        """)
+        stats_layout = QVBoxLayout(stats_frame)
         
-        # Main container with style
-        main_frame = ttk.Frame(report_window)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # Configure style for frames
-        style = ttk.Style()
-        style.configure('Custom.TLabelframe', background=COLORS['frame_bg'])
-        style.configure('Custom.TFrame', background=COLORS['frame_bg'])
-        
-        # Statistics frame with style
-        stats_frame = ttk.LabelFrame(main_frame, text="Estadísticas", style='Custom.TLabelframe')
-        stats_frame.pack(fill=tk.X, pady=5)
-        
-        # Create statistics labels
+        # Conteos
         conteo_cat = Counter(t['Categoría'] for t in tickets)
-        conteo_est = Counter(t['Estado'] for t in tickets)
         conteo_pri = Counter(t['Prioridad'] for t in tickets)
         
-        # Category distribution with styled labels
-        label = ttk.Label(stats_frame, text="Distribución por Categoría:", font=TITLE_FONT)
-        label.grid(row=0, column=0, sticky=tk.W)
+        # Define priority order and colors
+        prioridades_orden = ['Alta', 'Media', 'Baja']
+        conteo_pri_ordenado = {p: conteo_pri.get(p, 0) for p in prioridades_orden}
+        colors = ['#ff7f7f', '#ffcc7f', '#7fcc7f']  # Red, Orange, Green
         
-        for i, (cat, cnt) in enumerate(conteo_cat.items(), 1):
-            ttk.Label(
-                stats_frame,
-                text=f"{cat}: {cnt} tickets ({cnt/len(tickets):.1%})",
-                font=FONT
-            ).grid(row=i, column=0, sticky=tk.W)
+        # Mostrar estadísticas
+        stats_header = QLabel("Estadísticas")
+        stats_header.setStyleSheet("font-size: 18px; font-weight: bold; padding: 10px 0;")
+        stats_layout.addWidget(stats_header)
         
-        # Priority distribution with styled labels
-        ttk.Label(
-            stats_frame,
-            text="\nDistribución por Prioridad:",
-            font=TITLE_FONT
-        ).grid(row=0, column=1, sticky=tk.W, padx=(20,0))
+        # Create statistics container
+        stats_container = QWidget()
+        stats_layout_h = QHBoxLayout(stats_container)
         
-        for i, (pri, cnt) in enumerate(conteo_pri.items(), 1):
-            ttk.Label(
-                stats_frame,
-                text=f"{pri}: {cnt} tickets",
-                font=FONT
-            ).grid(row=i, column=1, sticky=tk.W, padx=(20,0))
+        # Categoría section
+        cat_frame = QFrame()
+        cat_frame.setStyleSheet("""
+            QFrame {
+                background-color: #f8f9fa;
+                border-radius: 5px;
+                padding: 10px;
+            }
+            QLabel {
+                color: #2c3e50;
+                margin: 5px 0;
+            }
+        """)
+        cat_layout = QVBoxLayout(cat_frame)
         
-        # Charts container with style
-        charts_container = ttk.Frame(main_frame, style='Custom.TFrame')
-        charts_container.pack(fill=tk.BOTH, expand=True)
+        cat_header = QLabel("Distribución por Categoría:")
+        cat_header.setStyleSheet("font-weight: bold; font-size: 15px;")
+        cat_layout.addWidget(cat_header)
         
-        # Category chart frame with style
-        cat_frame = ttk.LabelFrame(
-            charts_container,
-            text="Distribución por Categoría",
-            style='Custom.TLabelframe'
-        )
-        cat_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        total_tickets = sum(conteo_cat.values())
+        for categoria, cantidad in conteo_cat.items():
+            porcentaje = (cantidad / total_tickets) * 100
+            cat_label = QLabel(f"{categoria}: {cantidad} tickets ({porcentaje:.1f}%)")
+            cat_layout.addWidget(cat_label)
         
-        # Create and embed category chart
-        fig1 = plt.figure(figsize=(5, 4))
+        stats_layout_h.addWidget(cat_frame)
+        
+        # Seccion
+        pri_frame = QFrame()
+        pri_frame.setStyleSheet("""
+            QFrame {
+                background-color: #f8f9fa;
+                border-radius: 5px;
+                padding: 10px;
+                margin-left: 10px;
+            }
+            QLabel {
+                color: #2c3e50;
+                margin: 5px 0;
+            }
+        """)
+        pri_layout = QVBoxLayout(pri_frame)
+        
+        pri_header = QLabel("Distribución por Prioridad:")
+        pri_header.setStyleSheet("font-weight: bold; font-size: 15px;")
+        pri_layout.addWidget(pri_header)
+        
+        for prioridad in ['Alta', 'Media', 'Baja']:
+            cantidad = conteo_pri.get(prioridad, 0)
+            pri_label = QLabel(f"{prioridad}: {cantidad} tickets")
+            pri_layout.addWidget(pri_label)
+        
+        stats_layout_h.addWidget(pri_frame)
+        
+        stats_layout.addWidget(stats_container)
+
+        spacer = QLabel()
+        spacer.setFixedHeight(20)
+        stats_layout.addWidget(spacer)
+        
+        # Sección de gráficos
+        charts_container = QFrame()
+        charts_container.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 10px;
+                padding: 10px;
+            }
+        """)
+        charts_grid = QVBoxLayout(charts_container)
+        
+        # Primera fila: gráficos de barras
+        row1_container = QWidget()
+        row1_layout = QHBoxLayout(row1_container)
+        
+        # Contenedor de gráfico de categorías
+        cat_chart_container = QFrame()
+        cat_chart_layout = QVBoxLayout(cat_chart_container)
+        fig1 = plt.figure(figsize=(6, 5))
         ax1 = fig1.add_subplot(111)
         ax1.bar(conteo_cat.keys(), conteo_cat.values(), color='skyblue')
         ax1.set_title("Tickets por Categoría")
         ax1.set_xlabel("Categoría")
         ax1.set_ylabel("Número de Tickets")
-        plt.xticks(rotation=45)
-        plt.tight_layout()
+        ax1.tick_params(axis='x', rotation=45)
+        fig1.tight_layout(pad=1.5)
+        canvas1 = FigureCanvas(fig1)
+        canvas1.setMinimumSize(400, 300)
+        cat_chart_layout.addWidget(canvas1)
+        row1_layout.addWidget(cat_chart_container)
         
-        canvas1 = FigureCanvasTkAgg(fig1, master=cat_frame)
-        canvas1.draw()
-        canvas1.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-        
-        # Frame for priority chart
-        pri_frame = ttk.LabelFrame(
-            charts_container,
-            text="Distribución por Prioridad",
-            style='Custom.TLabelframe'
-        )
-        pri_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        # Create and embed priority chart
-        fig2 = plt.figure(figsize=(5, 4))
+        # Contenedor de gráfico de prioridades
+        pri_chart_container = QFrame()
+        pri_chart_layout = QVBoxLayout(pri_chart_container)
+        fig2 = plt.figure(figsize=(6, 5))
         ax2 = fig2.add_subplot(111)
-        
-        # Ordenar por prioridad (Alta, Media, Baja)
-        prioridades_orden = ['Alta', 'Media', 'Baja']
-        conteo_pri_ordenado = {p: conteo_pri.get(p, 0) for p in prioridades_orden}
-        
-        colors = ['#ff7f7f', '#ffcc7f', '#7fcc7f']  # Rojo, Amarillo, Verde
         ax2.bar(conteo_pri_ordenado.keys(), conteo_pri_ordenado.values(), color=colors)
         ax2.set_title("Tickets por Prioridad")
         ax2.set_xlabel("Prioridad")
         ax2.set_ylabel("Número de Tickets")
-        plt.tight_layout()
+        fig2.tight_layout(pad=1.5)
+        canvas2 = FigureCanvas(fig2)
+        canvas2.setMinimumSize(400, 300)
+        pri_chart_layout.addWidget(canvas2)
+        row1_layout.addWidget(pri_chart_container)
         
-        canvas2 = FigureCanvasTkAgg(fig2, master=pri_frame)
-        canvas2.draw()
-        canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        # Primera fila
+        charts_grid.addWidget(row1_container)
         
-        # Frame for pie chart
-        pie_frame = ttk.LabelFrame(
-            main_frame,
-            text="Distribución Porcentual por Categoría",
-            style='Custom.TLabelframe'
-        )
-        pie_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # Segunda fila
+        row2_container = QWidget()
+        row2_layout = QHBoxLayout(row2_container)
         
-        # Create and embed pie chart
-        fig3 = plt.figure(figsize=(6, 4))
+        pie_chart_container = QFrame()
+        pie_chart_layout = QVBoxLayout(pie_chart_container)
+        fig3 = plt.figure(figsize=(8, 6))
         ax3 = fig3.add_subplot(111)
-        
-        # Calculate percentages
-        total = sum(conteo_cat.values())
-        percentages = [f'{(count/total)*100:.1f}%' for count in conteo_cat.values()]
-        
-        # Create pie chart with percentages
         wedges, texts, autotexts = ax3.pie(
             conteo_cat.values(),
             labels=conteo_cat.keys(),
             autopct='%1.1f%%',
             startangle=90,
-            colors=plt.cm.Pastel1.colors,
-            wedgeprops=dict(width=0.4, edgecolor='w')
+            colors=plt.cm.Pastel1.colors
         )
-        
         ax3.set_title("Distribución Porcentual por Categoría")
-        plt.tight_layout()
+        fig3.tight_layout(pad=2)
+        canvas3 = FigureCanvas(fig3)
+        canvas3.setMinimumSize(500, 400)
+        pie_chart_layout.addWidget(canvas3)
+        row2_layout.addWidget(pie_chart_container)
         
-        canvas3 = FigureCanvasTkAgg(fig3, master=pie_frame)
-        canvas3.draw()
-        canvas3.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-        # Styled close button
-        close_btn = ttk.Button(
-            main_frame,
-            text="Cerrar",
-            command=report_window.destroy,
-            style='Custom.TButton'
-        )
-        close_btn.pack(pady=10)
+        # Agregar segunda fila
+        charts_grid.addWidget(row2_container)
         
-        # Configure button style
-        style.configure(
-            'Custom.TButton',
-            font=FONT,
-            background=COLORS['bg'],
-            foreground=COLORS['text']
-        )
-
+        # Agregar contenedor de gráficos al diseño de estadísticas
+        stats_layout.addWidget(charts_container)
+        
+        # Agregar marco de estadísticas al diseño principal
+        layout.addWidget(stats_frame)
+        
     except FileNotFoundError:
-        messagebox.showerror("Error", "Archivo de tickets no encontrado.")
+        label = QLabel("Error: Archivo de tickets no encontrado.")
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+    
+    parent.addWidget(scroll)
+    parent.setCurrentWidget(scroll)
+    return scroll

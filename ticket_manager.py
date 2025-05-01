@@ -8,6 +8,10 @@ from utils.classifier import clasificar_ticket
 from utils.decision_tree import decidir_prioridad
 from knowledge_base import soluciones_predefinidas
 from utils.file_handler import guardar_ticket
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+                            QFrame, QPushButton, QTableWidget, QTableWidgetItem,
+                            QScrollArea, QHeaderView, QMessageBox, QLineEdit, QTextEdit)
+from PyQt5.QtCore import Qt
 
 # Categorías posibles
 CATEGORIAS = ['Agua', 'Electricidad', 'Seguridad', 'Ruido', 'Limpieza']
@@ -124,36 +128,61 @@ def ver_historial():
 
 
 def crear_ticket_frame(parent):
-    frame = ttk.Frame(parent)
-    frame.pack(fill='both', expand=True, padx=20, pady=20)
+    frame = QWidget()
+    layout = QVBoxLayout(frame)
     
     # Header
-    header = ttk.Frame(frame)
-    header.pack(fill='x', pady=(0, 20))
-    ttk.Label(header, text="Crear Nuevo Ticket", font=('Helvetica', 20)).pack(side='left')
+    header_label = QLabel("Crear Nuevo Ticket")
+    header_label.setStyleSheet("""
+        font-size: 24px;
+        font-weight: bold;
+        color: #2c3e50;
+        padding: 20px 0;
+    """)
+    layout.addWidget(header_label)
     
     # Form fields
-    form_frame = ttk.Frame(frame)
-    form_frame.pack(fill='both', expand=True)
+    form_layout = QVBoxLayout()
     
-    # Add form fields
-    ttk.Label(form_frame, text="Nombre:").pack(pady=5)
-    nombre_entry = ttk.Entry(form_frame, width=50)
-    nombre_entry.pack(pady=5)
+    # Nombre field
+    nombre_label = QLabel("Nombre:")
+    nombre_input = QLineEdit()
+    nombre_input.setStyleSheet("padding: 8px;")
+    form_layout.addWidget(nombre_label)
+    form_layout.addWidget(nombre_input)
     
-    ttk.Label(form_frame, text="Descripción:").pack(pady=5)
-    desc_entry = ttk.Text(form_frame, width=50, height=5)
-    desc_entry.pack(pady=5)
+    # Descripción field
+    desc_label = QLabel("Descripción:")
+    desc_input = QTextEdit()
+    desc_input.setStyleSheet("padding: 8px;")
+    form_layout.addWidget(desc_label)
+    form_layout.addWidget(desc_input)
+    
+    # Submit button
+    submit_btn = QPushButton("Crear Ticket")
+    submit_btn.setStyleSheet("""
+        QPushButton {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        QPushButton:hover {
+            background-color: #2980b9;
+        }
+    """)
     
     def submit():
-        nombre = nombre_entry.get()
-        descripcion = desc_entry.get("1.0", "end-1c")
+        nombre = nombre_input.text()
+        descripcion = desc_input.toPlainText()
         
         if not nombre or not descripcion:
-            messagebox.showerror("Error", "Todos los campos son requeridos")
+            QMessageBox.critical(frame, "Error", "Todos los campos son requeridos")
             return
             
-        # Rest of the ticket creation logic
+        # Ticket logic
         categoria = clasificar_ticket(descripcion)
         fecha_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         prioridad = decidir_prioridad(descripcion)
@@ -172,20 +201,31 @@ def crear_ticket_frame(parent):
         }
         
         guardar_ticket(ticket)
-        messagebox.showinfo("Éxito", "Ticket creado exitosamente")
-        nombre_entry.delete(0, 'end')
-        desc_entry.delete("1.0", "end")
+        QMessageBox.information(frame, "Éxito", "Ticket creado exitosamente")
+        nombre_input.clear()
+        desc_input.clear()
     
-    ttk.Button(form_frame, text="Crear Ticket", command=submit).pack(pady=20)
+    submit_btn.clicked.connect(submit)
+    form_layout.addWidget(submit_btn)
+    
+    layout.addLayout(form_layout)
+    parent.addWidget(frame)
+    parent.setCurrentWidget(frame)
+    return frame
 
 def ver_historial_frame(parent):
-    frame = ttk.Frame(parent)
-    frame.pack(fill='both', expand=True, padx=20, pady=20)
+    frame = QWidget()
+    layout = QVBoxLayout(frame)
     
     # Header
-    header = ttk.Frame(frame)
-    header.pack(fill='x', pady=(0, 20))
-    ttk.Label(header, text="Historial de Tickets", font=('Helvetica', 20)).pack(side='left')
+    header_label = QLabel("Historial de Tickets")
+    header_label.setStyleSheet("""
+        font-size: 24px;
+        font-weight: bold;
+        color: #2c3e50;
+        padding: 20px 0;
+    """)
+    layout.addWidget(header_label)
     
     try:
         with open('ticket_data.csv', mode='r', newline='') as file:
@@ -193,35 +233,56 @@ def ver_historial_frame(parent):
             tickets = list(reader)
 
             if not tickets:
-                ttk.Label(frame, text="No hay tickets registrados aún.").pack(pady=20)
+                empty_label = QLabel("No hay tickets registrados aún.")
+                empty_label.setAlignment(Qt.AlignCenter)
+                layout.addWidget(empty_label)
+                parent.addWidget(frame)
+                parent.setCurrentWidget(frame)
                 return
 
-            # Create Treeview
-            tree = ttk.Treeview(frame, columns=list(tickets[0].keys()), show='headings')
+            # Crear tabla
+            table = QTableWidget()
+            headers = list(tickets[0].keys())
+            table.setColumnCount(len(headers))
+            table.setHorizontalHeaderLabels(headers)
+            table.setRowCount(len(tickets))
             
-            # Configure columns
-            for col in tickets[0].keys():
-                tree.heading(col, text=col)
-                tree.column(col, width=150, anchor='center')
+            # Configurar tabla para adaptarse al ancho
+            table.horizontalHeader().setStretchLastSection(True)
+            for i in range(len(headers)):
+                if headers[i] in ["Descripción", "Solución"]:
+                    table.horizontalHeader().setSectionResizeMode(i, QHeaderView.Stretch)
+                else:
+                    table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeToContents)
             
-            tree.column("Descripción", width=250)
-            tree.column("Solución", width=250)
+            table.setStyleSheet("""
+                QTableWidget {
+                    background-color: white;
+                    gridline-color: #d0d0d0;
+                    border: 1px solid #d0d0d0;
+                }
+                QHeaderView::section {
+                    background-color: #f0f0f0;
+                    padding: 5px;
+                    border: 1px solid #d0d0d0;
+                    font-weight: bold;
+                }
+            """)
             
-            # Add scrollbars
-            vsb = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
-            hsb = ttk.Scrollbar(frame, orient="horizontal", command=tree.xview)
-            tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+            # Insertar datos
+            for row, ticket in enumerate(tickets):
+                for col, (key, value) in enumerate(ticket.items()):
+                    item = QTableWidgetItem(str(value))
+                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Make read-only
+                    table.setItem(row, col, item)
             
-            # Grid layout
-            tree.grid(row=0, column=0, sticky='nsew')
-            vsb.grid(row=0, column=1, sticky='ns')
-            hsb.grid(row=1, column=0, sticky='ew')
-            
-            frame.grid_rowconfigure(0, weight=1)
-            frame.grid_columnconfigure(0, weight=1)
-            
-            for ticket in tickets:
-                tree.insert('', 'end', values=list(ticket.values()))
+            layout.addWidget(table)
 
     except FileNotFoundError:
-        ttk.Label(frame, text="No se encontró el archivo de tickets.").pack(pady=20)
+        error_label = QLabel("No se encontró el archivo de tickets.")
+        error_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(error_label)
+    
+    parent.addWidget(frame)
+    parent.setCurrentWidget(frame)
+    return frame
