@@ -1,6 +1,6 @@
 # SISTEMA DE GESTIÓN DE TICKETS CON ÁRBOLES DE DECISIÓN PARA CLASIFICAR URGENCIAS
 
-Sistema avanzado de gestión de tickets que utiliza árboles de decisión para clasificación automática de urgencias y generación de soluciones personalizadas.
+Sistema avanzado de gestión de tickets que utiliza árboles de decisión para clasificación automática de urgencias y generación de soluciones personalizadas, utilizando texto plano para almacenar la información (csv).
 
 ## Características principales 
 
